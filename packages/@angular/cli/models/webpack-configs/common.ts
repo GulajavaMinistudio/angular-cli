@@ -1,6 +1,7 @@
 import * as webpack from 'webpack';
 import * as path from 'path';
 import { GlobCopyWebpackPlugin } from '../../plugins/glob-copy-webpack-plugin';
+import { NamedLazyChunksWebpackPlugin } from '../../plugins/named-lazy-chunks-webpack-plugin';
 import { extraEntryParser, getOutputHashFormat } from './utils';
 import { WebpackConfigOptions } from '../webpack-config';
 
@@ -64,15 +65,6 @@ export function getCommonConfig(wco: WebpackConfigOptions) {
     extraPlugins.push(new ProgressPlugin({ profile: buildOptions.verbose, colors: true }));
   }
 
-  if (buildOptions.sourcemaps) {
-    extraPlugins.push(new webpack.SourceMapDevToolPlugin({
-      filename: '[file].map[query]',
-      moduleFilenameTemplate: '[resource-path]',
-      fallbackModuleFilenameTemplate: '[resource-path]?[hash]',
-      sourceRoot: 'webpack:///'
-    }));
-  }
-
   if (buildOptions.showCircularDependencies) {
     extraPlugins.push(new CircularDependencyPlugin({
       exclude: /(\\|\/)node_modules(\\|\/)/
@@ -109,7 +101,8 @@ export function getCommonConfig(wco: WebpackConfigOptions) {
       ].concat(extraRules)
     },
     plugins: [
-      new webpack.NoEmitOnErrorsPlugin()
+      new webpack.NoEmitOnErrorsPlugin(),
+      new NamedLazyChunksWebpackPlugin(),
     ].concat(extraPlugins),
     node: {
       fs: 'empty',
