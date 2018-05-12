@@ -6,6 +6,8 @@ import { killAllProcesses } from '../../utils/process';
 import { ngServe } from '../../utils/project';
 
 export default function () {
+  // TODO(architect): Delete this test. It is now in devkit/build-angular.
+
   const firstLocalIp = _(os.networkInterfaces())
     .values()
     .flatten()
@@ -16,14 +18,16 @@ export default function () {
   const localAddress = `http://${publicHost}`;
 
   return Promise.resolve()
-    .then(() => ngServe('--host=0.0.0.0'))
-    .then(() => request(localAddress))
-    .then(body => {
-      if (!body.match(/Invalid Host header/)) {
-        throw new Error('Response does not match expected value.');
-      }
-    })
-    .then(() => killAllProcesses(), (err) => { killAllProcesses(); throw err; })
+    // Disabling this test. Webpack Dev Server does not check the hots anymore when binding to
+    // numeric IP addresses.
+    // .then(() => ngServe('--host=0.0.0.0'))
+    // .then(() => request(localAddress))
+    // .then(body => {
+    //   if (!body.match(/Invalid Host header/)) {
+    //     throw new Error('Response does not match expected value.');
+    //   }
+    // })
+    // .then(() => killAllProcesses(), (err) => { killAllProcesses(); throw err; })
     .then(() => ngServe('--host=0.0.0.0', `--public-host=${publicHost}`))
     .then(() => request(localAddress))
     .then(body => {

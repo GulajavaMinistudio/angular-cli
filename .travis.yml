@@ -10,66 +10,71 @@ cache:
   directories:
      - ./node_modules
 
+stages:
+  - build
+  - test
+  - name: optional
+    if: (NOT type IN (pull_request)) AND (branch = master)
+  - deploy
+
 matrix:
   fast_finish: true
   allow_failures:
     - env: nightly
-    - env: ng2
-    - node_js: "7"
-    - node_js: "8"
+    - env: node9
   include:
+    # Build stage
     - stage: build
       script: npm run lint
       env: lint
     - script: npm run build
       env: build
 
+    # Test stage
     - stage: test
       script: npm run test
       env: test
-    - node_js: "6"
+    - node_js: "8"
       os: linux
       script: node tests/run_e2e.js --nb-shards=4 --shard=0 --nosilent
       env: e2e-0
-    - node_js: "6"
+    - node_js: "8"
       os: linux
       script: node tests/run_e2e.js --nb-shards=4 --shard=1 --nosilent
       env: e2e-1
-    - node_js: "6"
+    - node_js: "8"
       os: linux
       script: node tests/run_e2e.js --nb-shards=4 --shard=2 --nosilent
       env: e2e-2
-    - node_js: "6"
+    - node_js: "8"
       os: linux
       script: node tests/run_e2e.js --nb-shards=4 --shard=3 --nosilent
       env: e2e-3
-    - node_js: "6"
-      os: linux
-      script: node tests/run_e2e.js --eject "--glob=tests/build/**"
-      env: eject
-
-    # Optional builds.
-    - node_js: "6"
-      os: linux
-      before_script: if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then exit 0; fi
-      script: node tests/run_e2e.js --ng2 "--glob=tests/{build,test,misc}/**"
-      env: ng2
-    - node_js: "6"
-      os: linux
-      before_script: if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then exit 0; fi
-      script: node tests/run_e2e.js "--nightly --glob=tests/{build,test,misc}/**"
-      env: nightly
-    - node_js: "7"
-      os: linux
-      before_script: if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then exit 0; fi
-      script: node tests/run_e2e.js "--glob=tests/{build,test,misc}/**"
-      env: node7
     - node_js: "8"
       os: linux
-      before_script: if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then exit 0; fi
-      script: node tests/run_e2e.js "--glob=tests/build/**"
-      env: node8
+      script: node tests/run_e2e.js --ng-version="^5.0.0" "--glob=tests/{basic,build/styles,build/aot}/**"
+      env: ng5-subset-1
+    - node_js: "8"
+      os: linux
+      script: node tests/run_e2e.js --ng-version="^5.0.0" "--glob=tests/build/*"
+      env: ng5-subset-2
 
+    # Optional stage.
+    - stage: optional
+      node_js: "8"
+      os: linux
+      script: node tests/run_e2e.js --nightly "--glob=tests/build/**"
+      env: nightly
+    - node_js: "9"
+      os: linux
+      script: node tests/run_e2e.js "--glob=tests/build/**"
+      env: node9
+    - node_js: "10"
+      os: linux
+      script: node tests/run_e2e.js "--glob=tests/build/**"
+      env: node10
+
+    # Deploy stage
     - stage: deploy
       script: skip
       env: builds
@@ -79,8 +84,7 @@ matrix:
         skip_cleanup: true
         on:
           all_branches: true
-    - stage: deploy
-      script: skip
+    - script: skip
       env: publish
       deploy:
       - provider: script
@@ -90,11 +94,8 @@ matrix:
           tags: true
 
 
-before_install:
-  # Install npm 5.
-  - npm install -g npm@~5.3.0
-
 install:
+  - npm install -g npm@5.8.0
   - npm install
 
 env:

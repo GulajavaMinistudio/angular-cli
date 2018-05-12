@@ -1,10 +1,10 @@
-import {Logger} from '@ngtools/logger';
+import { logging } from '@angular-devkit/core';
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import {buildSchema} from './build-schema';
+import { promisify } from 'util';
+// import {buildSchema} from './build-schema';
 
-const denodeify = require('denodeify');
-const glob = denodeify(require('glob'));
+const glob = promisify(require('glob'));
 const tar = require('tar');
 const npmRun = require('npm-run');
 
@@ -57,8 +57,9 @@ function getDeps(pkg: any): any {
 }
 
 
-export default function build(packagesToBuild: string[], opts: { local: boolean },
-                              logger: Logger): Promise<void> {
+export default function build(packagesToBuild: string[],
+                              opts: { local: boolean, devkit: string, 'devkit-snapshots': boolean },
+                              logger: logging.Logger): Promise<void> {
   const { packages, tools } = require('../../../lib/packages');
 
   const willBuildEverything = packagesToBuild.length == 0;
@@ -74,15 +75,15 @@ export default function build(packagesToBuild: string[], opts: { local: boolean 
         return fs.remove(dist);
       }
     })
-    .then(() => logger.info('Creating schema.d.ts...'))
-    .then(() => {
-      const input = path.join(root, 'packages/@angular/cli/lib/config/schema.json');
-      const output = path.join(root, 'packages/@angular/cli/lib/config/schema.d.ts');
-      fs.writeFileSync(output, buildSchema(input, logger), { encoding: 'utf-8' });
-    })
+    // .then(() => logger.info('Creating schema.d.ts...'))
+    // .then(() => {
+    //   const input = path.join(root, 'packages/@angular/cli/lib/config/schema.json');
+    //   const output = path.join(root, 'packages/@angular/cli/lib/config/schema.d.ts');
+    //   fs.writeFileSync(output, buildSchema(input, logger), { encoding: 'utf-8' });
+    // })
     .then(() => logger.info('Compiling packages...'))
     .then(() => {
-      const packagesLogger = new Logger('packages', logger);
+      const packagesLogger = new logging.Logger('packages', logger);
       // Order packages in order of dependency.
       // We use bubble sort because we need a full topological sort but adding another dependency
       // or implementing a full topo sort would be too much work and I'm lazy. We don't anticipate
@@ -124,7 +125,7 @@ export default function build(packagesToBuild: string[], opts: { local: boolean 
     })
     .then(() => logger.info('Compiling tools...'))
     .then(() => {
-      const toolsLogger = new Logger('packages', logger);
+      const toolsLogger = new logging.Logger('packages', logger);
 
       return Object.keys(tools)
         .filter(toolName => packagesToBuild.indexOf(toolName) != -1)
@@ -220,7 +221,7 @@ export default function build(packagesToBuild: string[], opts: { local: boolean 
       // Copy LICENSE into all the packages
       logger.info('Copying LICENSE...');
 
-      const licenseLogger = new Logger('license', logger);
+      const licenseLogger = new logging.Logger('license', logger);
       return Promise.all(Object.keys(packages).map(pkgName => {
         const pkg = packages[pkgName];
         licenseLogger.info(pkgName);
@@ -256,13 +257,38 @@ export default function build(packagesToBuild: string[], opts: { local: boolean 
           }
         }
 
+        if (opts.devkit) {
+          // Load the packages info for devkit.
+          const devkitPackages = require(opts.devkit + '/lib/packages').packages;
+
+          for (const packageName of Object.keys(devkitPackages)) {
+            console.log(pkgName, packageName);
+            if (json['dependencies'].hasOwnProperty(packageName)) {
+              json['dependencies'][packageName] = devkitPackages[packageName].tar;
+            } else if (json['devDependencies'].hasOwnProperty(packageName)) {
+              json['devDependencies'][packageName] = devkitPackages[packageName].tar;
+            }
+          }
+        } else if (opts['devkit-snapshots']) {
+          // Use snapshots for devkit packages.
+          logger.info('Using snapshots of devkit packages.');
+          json['dependencies']['@angular-devkit/architect'] =
+            'github:angular/angular-devkit-architect-builds';
+          json['dependencies']['@angular-devkit/core'] =
+            'github:angular/angular-devkit-core-builds';
+          json['dependencies']['@angular-devkit/schematics'] =
+            'github:angular/angular-devkit-schematics-builds';
+          json['dependencies']['@schematics/angular'] = 'github:angular/schematics-angular-builds';
+          json['dependencies']['@schematics/update'] = 'github:angular/schematics-update-builds';
+        }
+
         fs.writeFileSync(pkg.distPackageJson, JSON.stringify(json, null, 2));
       });
     })
     .then(() => {
       logger.info('Tarring all packages...');
 
-      const tarLogger = new Logger('license', logger);
+      const tarLogger = new logging.Logger('license', logger);
       return Promise.all(Object.keys(packages).map(pkgName => {
         const pkg = packages[pkgName];
         tarLogger.info(`${pkgName} => ${pkg.tar}`);

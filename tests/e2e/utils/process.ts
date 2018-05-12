@@ -1,7 +1,10 @@
 import * as child_process from 'child_process';
-import {blue, yellow} from 'chalk';
+import { terminal } from '@angular-devkit/core';
+import { Observable, concat, defer, EMPTY, from} from 'rxjs';
+import {repeat, takeLast} from 'rxjs/operators';
 import {getGlobalVariable} from './env';
-import {rimraf, writeFile} from './fs';
+import {rimraf} from './fs';
+import {catchError} from 'rxjs/operators';
 const treeKill = require('tree-kill');
 
 
@@ -13,13 +16,13 @@ interface ExecOptions {
 
 let _processes: child_process.ChildProcess[] = [];
 
-type ProcessOutput = {
+export type ProcessOutput = {
   stdout: string;
   stderr: string;
 };
 
 
-function _exec(options: ExecOptions, cmd: string, args: string[]): Promise<ProcessOutput> {
+function  _exec(options: ExecOptions, cmd: string, args: string[]): Promise<ProcessOutput> {
   let stdout = '';
   let stderr = '';
   const cwd = process.cwd();
@@ -36,8 +39,8 @@ function _exec(options: ExecOptions, cmd: string, args: string[]): Promise<Proce
     .join(', ')
     .replace(/^(.+)$/, ' [$1]');  // Proper formatting.
 
-  console.log(blue(`Running \`${cmd} ${args.map(x => `"${x}"`).join(' ')}\`${flags}...`));
-  console.log(blue(`CWD: ${cwd}`));
+  console.log(terminal.blue(`Running \`${cmd} ${args.map(x => `"${x}"`).join(' ')}\`${flags}...`));
+  console.log(terminal.blue(`CWD: ${cwd}`));
   const spawnOptions: any = {cwd};
 
   if (process.platform.startsWith('win')) {
@@ -65,7 +68,7 @@ function _exec(options: ExecOptions, cmd: string, args: string[]): Promise<Proce
     data.toString('utf-8')
       .split(/[\n\r]+/)
       .filter(line => line !== '')
-      .forEach(line => console.error(yellow('  ' + line)));
+      .forEach(line => console.error(terminal.yellow('  ' + line)));
   });
 
   _processes.push(childProcess);
@@ -77,15 +80,20 @@ function _exec(options: ExecOptions, cmd: string, args: string[]): Promise<Proce
       _processes = _processes.filter(p => p !== childProcess);
 
       if (!error) {
-        resolve({ stdout });
+        resolve({ stdout, stderr });
       } else {
-        err.message += `${error}...\n\nSTDOUT:\n${stdout}\n`;
+        err.message += `${error}...\n\nSTDOUT:\n${stdout}\n\nSTDERR:\n${stderr}\n`;
         reject(err);
       }
     });
 
     if (options.waitForMatch) {
       childProcess.stdout.on('data', (data: Buffer) => {
+        if (data.toString().match(options.waitForMatch)) {
+          resolve({ stdout, stderr });
+        }
+      });
+      childProcess.stderr.on('data', (data: Buffer) => {
         if (data.toString().match(options.waitForMatch)) {
           resolve({ stdout, stderr });
         }
@@ -97,26 +105,32 @@ function _exec(options: ExecOptions, cmd: string, args: string[]): Promise<Proce
 export function waitForAnyProcessOutputToMatch(match: RegExp,
                                                timeout = 30000): Promise<ProcessOutput> {
   // Race between _all_ processes, and the timeout. First one to resolve/reject wins.
-  return Promise.race(_processes.map(childProcess => new Promise(resolve => {
-    let stdout = '';
-    let stderr = '';
-    childProcess.stdout.on('data', (data: Buffer) => {
-      stdout += data.toString();
-      if (data.toString().match(match)) {
-        resolve({ stdout, stderr });
-      }
-    });
-    childProcess.stderr.on('data', (data: Buffer) => {
-      stderr += data.toString();
-    });
-  })).concat([
-    new Promise((resolve, reject) => {
-      // Wait for 30 seconds and timeout.
-      setTimeout(() => {
-        reject(new Error(`Waiting for ${match} timed out (timeout: ${timeout}msec)...`));
-      }, timeout);
-    })
-  ]));
+  const timeoutPromise: Promise<ProcessOutput> = new Promise((_resolve, reject) => {
+    // Wait for 30 seconds and timeout.
+    setTimeout(() => {
+      reject(new Error(`Waiting for ${match} timed out (timeout: ${timeout}msec)...`));
+    }, timeout);
+  });
+
+  const matchPromises: Promise<ProcessOutput>[] = _processes.map(
+    childProcess => new Promise(resolve => {
+      let stdout = '';
+      let stderr = '';
+      childProcess.stdout.on('data', (data: Buffer) => {
+        stdout += data.toString();
+        if (data.toString().match(match)) {
+          resolve({ stdout, stderr });
+        }
+      });
+      childProcess.stderr.on('data', (data: Buffer) => {
+        stderr += data.toString();
+        if (data.toString().match(match)) {
+          resolve({ stdout, stderr });
+        }
+      });
+    }));
+
+  return Promise.race(matchPromises.concat([timeoutPromise]));
 }
 
 export function killAllProcesses(signal = 'SIGTERM') {
@@ -133,13 +147,27 @@ export function silentExec(cmd: string, ...args: string[]) {
 }
 
 export function execAndWaitForOutputToMatch(cmd: string, args: string[], match: RegExp) {
-  return _exec({ waitForMatch: match }, cmd, args);
+  if (cmd === 'ng' && args[0] === 'serve') {
+    // Accept matches up to 20 times after the initial match.
+    // Useful because the Webpack watcher can rebuild a few times due to files changes that
+    // happened just before the build (e.g. `git clean`).
+    // This seems to be due to host file system differences, see
+    // https://nodejs.org/docs/latest/api/fs.html#fs_caveats
+    return concat(
+      from(
+        _exec({ waitForMatch: match }, cmd, args)
+      ),
+      defer(() => waitForAnyProcessOutputToMatch(match, 2500)).pipe(
+        repeat(20),
+        catchError(() => EMPTY),
+      ),
+    ).pipe(
+      takeLast(1),
+    ).toPromise();
+  } else {
+    return _exec({ waitForMatch: match }, cmd, args);
+  }
 }
-
-export function silentExecAndWaitForOutputToMatch(cmd: string, args: string[], match: RegExp) {
-  return _exec({ silent: true, waitForMatch: match }, cmd, args);
-}
-
 
 let npmInstalledEject = false;
 export function ng(...args: string[]) {
@@ -152,8 +180,8 @@ export function ng(...args: string[]) {
         .then(() => {
           if (!npmInstalledEject) {
             npmInstalledEject = true;
-            // We need to run npm install on the first eject.
-            return silentNpm('install');
+            // We need to delete node_modules, then run npm install on the first eject.
+            return rimraf('node_modules').then(() => silentNpm('install'));
           }
         })
         .then(() => rimraf('dist'))

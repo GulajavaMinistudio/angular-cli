@@ -1,41 +1,18 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as chalk from 'chalk';
-import denodeify = require('denodeify');
+import { CommandScope, Option } from '../models/command';
+import { getDefaultSchematicCollection } from '../utilities/config';
+import { SchematicCommand } from '../models/schematic-command';
 
-import InitCommand from './init';
-import { CliConfig } from '../models/config';
-import { validateProjectName } from '../utilities/validate-project-name';
-import { oneLine } from 'common-tags';
 
-const Command = require('../ember-cli/lib/models/command');
-const Project = require('../ember-cli/lib/models/project');
-const SilentError = require('silent-error');
-
-// There's some problem with the generic typings for fs.makedir.
-// Couldn't find matching types for the callbacks so leaving it as any for now.
-const mkdir = denodeify<string, void>(fs.mkdir as any);
-
-const configFile = '.angular-cli.json';
-const changeLater = (path: string) => `You can later change the value in "${configFile}" (${path})`;
-
-const NewCommand = Command.extend({
-  name: 'new',
-  aliases: ['n'],
-  description: `Creates a new directory and a new Angular app eg. "ng new [name]".`,
-  works: 'outsideProject',
-
-  availableOptions: [
-    {
-      name: 'dry-run',
-      type: Boolean,
-      default: false,
-      aliases: ['d'],
-      description: oneLine`
-        Run through without making any changes.
-        Will list all files that would have been created when running "ng new".
-      `
-    },
+export default class NewCommand extends SchematicCommand {
+  public readonly name = 'new';
+  public readonly description =
+    'Creates a new directory and a new Angular app.';
+  public static aliases = ['n'];
+  public scope = CommandScope.outsideProject;
+  public readonly allowMissingWorkspace = true;
+  public arguments: string[] = [];
+  public options: Option[] = [
+    ...this.coreOptions,
     {
       name: 'verbose',
       type: Boolean,
@@ -44,161 +21,78 @@ const NewCommand = Command.extend({
       description: 'Adds more details to output logging.'
     },
     {
-      name: 'link-cli',
-      type: Boolean,
-      default: false,
-      aliases: ['lc'],
-      description: 'Automatically link the `@angular/cli` package.',
-      hidden: true
-    },
-    {
-      name: 'skip-install',
-      type: Boolean,
-      default: false,
-      aliases: ['si'],
-      description: 'Skip installing packages.'
-    },
-    {
-      name: 'skip-git',
-      type: Boolean,
-      default: false,
-      aliases: ['sg'],
-      description: 'Skip initializing a git repository.'
-    },
-    {
-      name: 'skip-tests',
-      type: Boolean,
-      default: false,
-      aliases: ['st'],
-      description: 'Skip creating spec files.'
-    },
-    {
-      name: 'skip-commit',
-      type: Boolean,
-      default: false,
-      aliases: ['sc'],
-      description: 'Skip committing the first commit to git.'
-    },
-    {
-      name: 'directory',
+      name: 'collection',
       type: String,
-      aliases: ['dir'],
-      description: 'The directory name to create the app in.'
-    },
-    {
-      name: 'source-dir',
-      type: String,
-      default: 'src',
-      aliases: ['sd'],
-      description: `The name of the source directory. ${changeLater('apps[0].root')}.`
-    },
-    {
-      name: 'style',
-      type: String,
-      default: 'css',
-      description: oneLine`The style file default extension.
-        Possible values: css, scss, less, sass, styl(stylus).
-        ${changeLater('defaults.styleExt')}.
-      `
-    },
-    {
-      name: 'prefix',
-      type: String,
-      default: 'app',
-      aliases: ['p'],
-      description: oneLine`
-        The prefix to use for all component selectors.
-        ${changeLater('apps[0].prefix')}.
-      `
-    },
-    {
-      name: 'routing',
-      type: Boolean,
-      default: false,
-      description: 'Generate a routing module.'
-    },
-    {
-      name: 'inline-style',
-      type: Boolean,
-      default: false,
-      aliases: ['is'],
-      description: 'Should have an inline style.'
-    },
-    {
-      name: 'inline-template',
-      type: Boolean,
-      default: false,
-      aliases: ['it'],
-      description: 'Should have an inline template.'
-     },
-     {
-      name: 'minimal',
-      type: Boolean,
-      default: false,
-      description: 'Should create a minimal app.'
-     }
-  ],
-
-  isProject: function (projectPath: string) {
-    return CliConfig.fromProject(projectPath) !== null;
-  },
-
-  run: function (commandOptions: any, rawArgs: string[]) {
-    const packageName = rawArgs.shift();
-
-    if (!packageName) {
-      return Promise.reject(new SilentError(
-        `The "ng ${this.name}" command requires a name argument to be specified eg. ` +
-        chalk.yellow('ng new [name] ') +
-        `For more details, use "ng help".`));
+      aliases: ['c'],
+      description: 'Schematics collection to use.'
     }
+  ];
 
-    validateProjectName(packageName);
-    commandOptions.name = packageName;
-    if (commandOptions.dryRun) {
-      commandOptions.skipGit = true;
+  private initialized = false;
+  public initialize(options: any) {
+    if (this.initialized) {
+      return Promise.resolve();
     }
+    super.initialize(options);
+    this.initialized = true;
 
-    const directoryName = path.join(process.cwd(),
-      commandOptions.directory ? commandOptions.directory : packageName);
+    const collectionName = this.parseCollectionName(options);
+    const schematicName = 'application';
 
-    const initCommand = new InitCommand({
-      ui: this.ui,
-      tasks: this.tasks,
-      project: Project.nullProject(this.ui, this.cli)
-    });
-
-    let createDirectory;
-    if (commandOptions.dryRun) {
-      createDirectory = Promise.resolve()
-        .then(() => {
-          if (fs.existsSync(directoryName) && this.isProject(directoryName)) {
-            throw new SilentError(oneLine`
-              Directory ${directoryName} exists and is already an Angular CLI project.
-            `);
-          }
-        });
-    } else {
-      createDirectory = mkdir(directoryName)
-        .catch((err) => {
-          if (err.code === 'EEXIST') {
-            if (this.isProject(directoryName)) {
-              throw new SilentError(oneLine`
-                Directory ${directoryName} exists and is already an Angular CLI project.
-              `);
-            }
-          } else {
-            throw err;
-          }
-        })
-        .then(() => process.chdir(directoryName));
-    }
-
-    return createDirectory
-      .then(initCommand.run.bind(initCommand, commandOptions, rawArgs));
+    return this.getOptions({
+        schematicName,
+        collectionName
+      })
+      .then((schematicOptions) => {
+        this.options = this.options.concat(schematicOptions.options);
+        const args = schematicOptions.arguments.map(arg => arg.name);
+        this.arguments = this.arguments.concat(args);
+      });
   }
-});
 
+  public async run(options: any) {
+    if (options.dryRun) {
+      options.skipGit = true;
+    }
 
-NewCommand.overrideCore = true;
-export default NewCommand;
+    let collectionName: string;
+    if (options.collection) {
+      collectionName = options.collection;
+    } else {
+      collectionName = this.parseCollectionName(options);
+    }
+
+    const pathOptions = this.setPathOptions(options, '/');
+    options = { ...options, ...pathOptions };
+
+    const packageJson = require('../package.json');
+    options.version = packageJson.version;
+
+    // Ensure skipGit has a boolean value.
+    options.skipGit = options.skipGit === undefined ? false : options.skipGit;
+
+    options = this.removeLocalOptions(options);
+
+    return this.runSchematic({
+      collectionName: collectionName,
+      schematicName: 'ng-new',
+      schematicOptions: options,
+      debug: options.debug,
+      dryRun: options.dryRun,
+      force: options.force
+    });
+  }
+
+  private parseCollectionName(options: any): string {
+    const collectionName = options.collection || options.c || getDefaultSchematicCollection();
+
+    return collectionName;
+  }
+
+  private removeLocalOptions(options: any): any {
+    const opts = Object.assign({}, options);
+    delete opts.verbose;
+    delete opts.collection;
+    return opts;
+  }
+}

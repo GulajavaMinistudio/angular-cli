@@ -11,9 +11,17 @@ export function assetDir(assetName: string) {
   return join(__dirname, '../assets', assetName);
 }
 
+export function copyProjectAsset(assetName: string, to?: string) {
+  const tempRoot = join(getGlobalVariable('tmp-root'), 'test-project');
+  const sourcePath = assetDir(assetName);
+  const targetPath = join(tempRoot, to || assetName);
+
+  return copyFile(sourcePath, targetPath);
+}
 
 export function copyAssets(assetName: string) {
-  const tempRoot = join(getGlobalVariable('tmp-root'), 'assets', assetName);
+  const seed = +Date.now();
+  const tempRoot = join(getGlobalVariable('tmp-root'), 'assets', assetName + '-' + seed);
   const root = assetDir(assetName);
 
   return Promise.resolve()
@@ -32,8 +40,6 @@ export function copyAssets(assetName: string) {
 
 
 export function createProjectFromAsset(assetName: string) {
-  const packages = require('../../../lib/packages').packages;
-
   return Promise.resolve()
     .then(() => copyAssets(assetName))
     .then(dir => process.chdir(dir))

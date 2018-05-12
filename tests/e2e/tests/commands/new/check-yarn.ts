@@ -1,13 +1,13 @@
 import {ng} from '../../../utils/process';
 import {getGlobalVariable} from '../../../utils/env';
 
-const yarnRegEx = /You can `ng set --global packageManager=yarn`./;
+const yarnRegEx = /You can `ng config -g cli.packageManager yarn`./;
 
 export default function() {
   return Promise.resolve()
     .then(() => process.chdir(getGlobalVariable('tmp-root')))
-    .then(() =>  ng('set', '--global', 'packageManager=default'))
-    .then(() =>  ng('new', 'foo'))
+    .then(() =>  ng('config', '--global', 'packageManager', 'default'))
+    .then(() =>  ng('new', 'foo', '--version=1.6.8'))
     .then(({ stdout }) => {
       // Assuming yarn is installed and checking for message with yarn.
       if (!stdout.match(yarnRegEx)) {

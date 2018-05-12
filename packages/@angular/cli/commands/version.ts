@@ -1,25 +1,21 @@
-const Command = require('../ember-cli/lib/models/command');
+import { terminal } from '@angular-devkit/core';
+import { Command, Option } from '../models/command';
+import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';
-import * as chalk from 'chalk';
-import { CliConfig } from '../models/config';
+import { findUp } from '../utilities/find-up';
 
 
-const VersionCommand = Command.extend({
-  name: 'version',
-  description: 'Outputs Angular CLI version.',
-  aliases: ['v', '--version', '-v'],
-  works: 'everywhere',
+export default class VersionCommand extends Command {
+  public readonly name = 'version';
+  public readonly description = 'Outputs Angular CLI version.';
+  public static aliases = ['v'];
+  public readonly arguments: string[] = [];
+  public readonly options: Option[] = [];
 
-  availableOptions: [{
-    name: 'verbose',
-    type: Boolean,
-    'default': false,
-    description: 'Adds more details to output logging.'
-  }],
-
-  run: function (options: any) {
-    let versions: any = process.versions;
+  public run(_options: any) {
+    let angularCoreVersion = '';
+    let angularSameAsCore: string[] = [];
     const pkg = require(path.resolve(__dirname, '..', 'package.json'));
     let projPkg: any;
     try {
@@ -28,10 +24,50 @@ const VersionCommand = Command.extend({
       projPkg = undefined;
     }
 
-    versions.os = process.platform + ' ' + process.arch;
+    const patterns = [
+      /^@angular\/.*/,
+      /^@angular-devkit\/.*/,
+      /^@ngtools\/.*/,
+      /^@schematics\/.*/,
+      /^rxjs$/,
+      /^typescript$/,
+      /^ng-packagr$/,
+      /^webpack$/,
+    ];
 
-    const alwaysPrint = ['node', 'os'];
-    const roots = ['@angular/', '@ngtools/'];
+    const maybeNodeModules = findUp('node_modules', __dirname);
+    const packageRoot = projPkg
+      ? path.resolve(this.project.root, 'node_modules')
+      : maybeNodeModules;
+
+    const versions = [
+      ...Object.keys(pkg && pkg['dependencies'] || {}),
+      ...Object.keys(pkg && pkg['devDependencies'] || {}),
+      ...Object.keys(projPkg && projPkg['dependencies'] || {}),
+      ...Object.keys(projPkg && projPkg['devDependencies'] || {}),
+
+      // Add all node_modules and node_modules/@*/*
+      ...fs.readdirSync(packageRoot)
+        .reduce((acc, name) => {
+          if (name.startsWith('@')) {
+            return acc.concat(
+              fs.readdirSync(path.resolve(packageRoot, name))
+                .map(subName => name + '/' + subName),
+            );
+          } else {
+            return acc.concat(name);
+          }
+        }, []),
+      ]
+      .filter(x => patterns.some(p => p.test(x)))
+      .reduce((acc, name) => {
+        if (name in acc) {
+          return acc;
+        }
+
+        acc[name] = this.getVersion(name, packageRoot, maybeNodeModules);
+        return acc;
+      }, {} as { [module: string]: string });
 
     let ngCliVersion = pkg.version;
     if (!__dirname.match(/node_modules/)) {
@@ -44,64 +80,83 @@ const VersionCommand = Command.extend({
 
       ngCliVersion = `local (v${pkg.version}, branch: ${gitBranch})`;
     }
-    const config = CliConfig.fromProject();
-    if (config && config.config && config.config.project) {
-      if (config.config.project.ejected) {
-        ngCliVersion += ' (e)';
-      }
-    }
 
     if (projPkg) {
-      roots.forEach(root => {
-        versions = Object.assign(versions, this.getDependencyVersions(projPkg, root));
-      });
-    }
-    const asciiArt = `    _                      _                 ____ _     ___
-   / \\   _ __   __ _ _   _| | __ _ _ __     / ___| |   |_ _|
-  / △ \\ | '_ \\ / _\` | | | | |/ _\` | '__|   | |   | |    | |
- / ___ \\| | | | (_| | |_| | | (_| | |      | |___| |___ | |
-/_/   \\_\\_| |_|\\__, |\\__,_|_|\\__,_|_|       \\____|_____|___|
-               |___/`;
-    this.ui.writeLine(chalk.red(asciiArt));
-    this.printVersion('@angular/cli', ngCliVersion);
-
-    for (const module of Object.keys(versions)) {
-      const isRoot = roots.some(root => module.startsWith(root));
-      if (options.verbose || alwaysPrint.indexOf(module) > -1 || isRoot) {
-        this.printVersion(module, versions[module]);
+      // Filter all angular versions that are the same as core.
+      angularCoreVersion = versions['@angular/core'];
+      if (angularCoreVersion) {
+        for (const angularPackage of Object.keys(versions)) {
+          if (versions[angularPackage] == angularCoreVersion
+              && angularPackage.startsWith('@angular/')) {
+            angularSameAsCore.push(angularPackage.replace(/^@angular\//, ''));
+            delete versions[angularPackage];
+          }
+        }
       }
     }
-  },
 
-  getDependencyVersions: function(pkg: any, prefix: string): any {
-    const modules: any = {};
+    const namePad = ' '.repeat(
+      Object.keys(versions).sort((a, b) => b.length - a.length)[0].length + 3
+    );
+    const asciiArt = `
+     _                      _                 ____ _     ___
+    / \\   _ __   __ _ _   _| | __ _ _ __     / ___| |   |_ _|
+   / △ \\ | '_ \\ / _\` | | | | |/ _\` | '__|   | |   | |    | |
+  / ___ \\| | | | (_| | |_| | | (_| | |      | |___| |___ | |
+ /_/   \\_\\_| |_|\\__, |\\__,_|_|\\__,_|_|       \\____|_____|___|
+                |___/
+    `.split('\n').map(x => terminal.red(x)).join('\n');
 
-    Object.keys(pkg['dependencies'] || {})
-      .concat(Object.keys(pkg['devDependencies'] || {}))
-      .filter(depName => depName && depName.startsWith(prefix))
-      .forEach(key => modules[key] = this.getVersion(key));
+    this.logger.info(asciiArt);
+    this.logger.info(`
+      Angular CLI: ${ngCliVersion}
+      Node: ${process.versions.node}
+      OS: ${process.platform} ${process.arch}
+      Angular: ${angularCoreVersion}
+      ... ${angularSameAsCore.sort().reduce((acc, name) => {
+        // Perform a simple word wrap around 60.
+        if (acc.length == 0) {
+          return [name];
+        }
+        const line = (acc[acc.length - 1] + ', ' + name);
+        if (line.length > 60) {
+          acc.push(name);
+        } else {
+          acc[acc.length - 1] = line;
+        }
+        return acc;
+      }, []).join('\n... ')}
 
-    return modules;
-  },
-
-  getVersion: function(moduleName: string): string {
-    try {
-      const modulePkg = require(path.resolve(
-        this.project.root,
-        'node_modules',
-        moduleName,
-        'package.json'));
-      return modulePkg.version;
-    } catch (e) {
-      return 'error';
-    }
-  },
-
-  printVersion: function (module: string, version: string) {
-    this.ui.writeLine(module + ': ' + version);
+      Package${namePad.slice(7)}Version
+      -------${namePad.replace(/ /g, '-')}------------------
+      ${Object.keys(versions)
+          .map(module => `${module}${namePad.slice(module.length)}${versions[module]}`)
+          .sort()
+          .join('\n')}
+    `.replace(/^ {6}/gm, ''));
   }
-});
 
+  private getVersion(
+    moduleName: string,
+    projectNodeModules: string,
+    cliNodeModules: string,
+  ): string {
+    try {
+      if (projectNodeModules) {
+        const modulePkg = require(path.resolve(projectNodeModules, moduleName, 'package.json'));
+        return modulePkg.version;
+      }
+    } catch (_) {
+    }
 
-VersionCommand.overrideCore = true;
-export default VersionCommand;
+    try {
+      if (cliNodeModules) {
+        const modulePkg = require(path.resolve(cliNodeModules, moduleName, 'package.json'));
+        return modulePkg.version + ' (cli-only)';
+      }
+    } catch (e) {
+    }
+
+    return '<error>';
+  }
+}

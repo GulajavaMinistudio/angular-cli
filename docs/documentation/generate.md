@@ -3,9 +3,9 @@
 # ng generate
 
 ## Overview
-`ng generate [name]` generates the specified blueprint
+`ng generate [name]` generates the specified schematic
 
-## Available blueprints:
+## Available Schematics:
  - [class](generate/class)
  - [component](generate/component)
  - [directive](generate/directive)
@@ -16,36 +16,26 @@
  - [pipe](generate/pipe)
  - [service](generate/service)
 
+ - [application](generate/application)
+ - [library](generate/library)
+ - [universal](generate/universal)
+
 ## Options
 <details>
   <summary>dry-run</summary>
   <p>
-    <code>--dry-run</code> (aliases: <code>-d</code>) <em>default value: false</em>
+    <code>--dry-run</code> (alias: <code>-d</code>)
   </p>
   <p>
-     Run through without making any changes. Will list all files that would have been created when running <code>ng generate</code>.
-  </p>
-</details>
-
-<details>
-  <summary>lint-fix</summary>
-  <p>
-    <code>--lint-fix</code> (aliases: <code>-lf</code>)
-  </p>
-  <p>
-    Use lint to fix files after generation.
-  </p>
-  <p>
-    You can also set default true to use lint every time after generation. To do this, change the value in <em>.angular-cli.json</em> (<code>defaults.lintFix</code>).
+    Run through without making any changes.
   </p>
 </details>
-
 <details>
-  <summary>verbose</summary>
+  <summary>force</summary>
   <p>
-    <code>--verbose</code> (aliases: <code>-v</code>) <em>default value: false</em>
+    <code>--force</code> (alias: <code>-f</code>)
   </p>
   <p>
-    Adds more details to output logging.
+    Forces overwriting of files.
   </p>
 </details>

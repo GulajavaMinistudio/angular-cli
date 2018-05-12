@@ -2,7 +2,7 @@
 'use strict';
 
 /* eslint-disable no-console */
-const chalk = require('chalk');
+const terminal = require('@angular-devkit/core').terminal;
 const fs = require('fs');
 const glob = require('glob');
 const packages = require('../../lib/packages').packages;
@@ -12,24 +12,9 @@ const path = require('path');
 const IMPORT_RE = /(^|\n)\s*import\b(?:.|\n)*?\'[^\']*\'/g;
 const REQUIRE_RE = /\brequire\('[^)]+?'\)/g;
 const IGNORE_RE = /\s+@ignoreDep\s+\S+/g;
-const NODE_PACKAGES = [
-  'child_process',
-  'fs',
-  'https',
-  'os',
-  'path',
-  'process',
-  'url',
-  'vm',
-  'zlib'
-];
-const ANGULAR_PACKAGES = [
-  '@angular/compiler',
-  '@angular/compiler-cli',
-  '@angular/core'
-];
-const OPTIONAL_PACKAGES = [
-  '@angular/service-worker'
+const NODE_PACKAGES = Object.keys(process.binding('natives'));
+const DYNAMIC_DEVKIT_PACKAGES = [
+  '@schematics/update',
 ];
 
 
@@ -85,9 +70,9 @@ function listIgnoredModules(source) {
 
 function reportMissingDependencies(missingDeps) {
   if (missingDeps.length == 0) {
-    console.log(chalk.green('  no dependency missing from package.json.'));
+    console.log(terminal.green('  no dependency missing from package.json.'));
   } else {
-    console.log(chalk.yellow(`  ${missingDeps.length} missing from package.json:`));
+    console.log(terminal.yellow(`  ${missingDeps.length} missing from package.json:`));
     missingDeps.forEach(md => console.log(`    ${md}`));
     exitCode = 1;
   }
@@ -95,9 +80,9 @@ function reportMissingDependencies(missingDeps) {
 
 function reportExcessiveDependencies(overDeps) {
   if (overDeps.length == 0) {
-    console.log(chalk.green('  no excessive dependencies in package.json.'));
+    console.log(terminal.green('  no excessive dependencies in package.json.'));
   } else {
-    console.log(chalk.yellow(`  ${overDeps.length} excessive dependencies in package.json:`));
+    console.log(terminal.yellow(`  ${overDeps.length} excessive dependencies in package.json:`));
     overDeps.forEach(md => console.log(`    ${md}`));
     exitCode = 1;
   }
@@ -106,7 +91,7 @@ function reportExcessiveDependencies(overDeps) {
 let exitCode = 0;
 const overallDeps = [];
 for (const packageName of Object.keys(packages)) {
-  console.log(chalk.green(`Reading dependencies of "${packageName}".`));
+  console.log(terminal.green(`Reading dependencies of "${packageName}".`));
 
   const allSources = glob.sync(path.join(__dirname, '../../packages/', packageName, '**/*'))
     .filter(p => p.match(/\.(js|ts)$/))
@@ -132,7 +117,7 @@ for (const packageName of Object.keys(packages)) {
     .filter(x => NODE_PACKAGES.indexOf(x) == -1);
   overallDeps.push(...dependencies);
 
-  console.log(chalk.green(`  found ${dependencies.length} dependencies...`));
+  console.log(terminal.green(`  found ${dependencies.length} dependencies...`));
   const packageJson = JSON.parse(fs.readFileSync(packages[packageName].packageJson, 'utf8'));
   const allDeps = []
     .concat(Object.keys(packageJson['dependencies'] || {}))
@@ -140,19 +125,18 @@ for (const packageName of Object.keys(packages)) {
     .concat(Object.keys(packageJson['devDependencies'] || {}))
     .concat(Object.keys(packageJson['peerDependencies'] || {}));
 
-  const missingDeps = dependencies
-    .filter(d => allDeps.indexOf(d) == -1)
-    .filter(d => OPTIONAL_PACKAGES.indexOf(d) == -1);
+  const missingDeps = dependencies.filter(d => allDeps.indexOf(d) == -1)
+    .filter(x => DYNAMIC_DEVKIT_PACKAGES.indexOf(x) == -1);
   reportMissingDependencies(missingDeps);
 
   const overDeps = allDeps.filter(d => dependencies.indexOf(d) == -1)
-    .filter(x => ANGULAR_PACKAGES.indexOf(x) == -1);
+    .filter(x => DYNAMIC_DEVKIT_PACKAGES.indexOf(x) == -1);
   reportExcessiveDependencies(overDeps);
 
   console.log('');
 }
 
-console.log(chalk.green('Validating root package. [devDependencies ignored]'));
+console.log(terminal.green('Validating root package. [devDependencies ignored]'));
 const rootPackagePath = path.join(__dirname, '../../package.json');
 const rootPackageJson = JSON.parse(fs.readFileSync(rootPackagePath, 'utf8'));
 // devDependencies are ignored
@@ -164,11 +148,11 @@ const allRootDeps = []
 const internalPackages = Object.keys(packages);
 const missingRootDeps = overallDeps.filter(d => allRootDeps.indexOf(d) == -1)
   .filter(d => internalPackages.indexOf(d) == -1)
-  .filter(x => OPTIONAL_PACKAGES.indexOf(x) == -1);
+  .filter(x => DYNAMIC_DEVKIT_PACKAGES.indexOf(x) == -1);
 reportMissingDependencies(missingRootDeps);
 
 const overRootDeps = allRootDeps.filter(d => overallDeps.indexOf(d) == -1)
-  .filter(x => ANGULAR_PACKAGES.indexOf(x) == -1);
+  .filter(x => DYNAMIC_DEVKIT_PACKAGES.indexOf(x) == -1);
 reportExcessiveDependencies(overRootDeps);
 
 process.exit(exitCode);

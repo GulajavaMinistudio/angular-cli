@@ -1,22 +1,20 @@
-import 'reflect-metadata';
-
-import {IndentLogger, LogEntry} from '@ngtools/logger';
-import {bold, red, yellow, white} from 'chalk';
+import { logging, terminal } from '@angular-devkit/core';
 import * as minimist from 'minimist';
 
+import {filter} from 'rxjs/operators';
 
-import 'rxjs/add/operator/filter';
 
+const { bold, red, yellow, white } = terminal;
 
 const argv = minimist(process.argv.slice(2), {
   boolean: ['verbose']
 });
 
-const rootLogger = new IndentLogger('cling');
+const rootLogger = new logging.IndentLogger('cling');
 
 rootLogger
-  .filter((entry: LogEntry) => (entry.level != 'debug' || argv['verbose']))
-  .subscribe((entry: LogEntry) => {
+  .pipe(filter(entry => (entry.level != 'debug' || argv['verbose'])))
+  .subscribe(entry => {
     let color: (s: string) => string = white;
     let output = process.stdout;
     switch (entry.level) {
@@ -30,7 +28,7 @@ rootLogger
   });
 
 rootLogger
-  .filter((entry: LogEntry) => entry.level == 'fatal')
+  .pipe(filter(entry => entry.level == 'fatal'))
   .subscribe(() => {
     process.stderr.write('A fatal error happened. See details above.');
     process.exit(100);
@@ -44,6 +42,7 @@ switch (command) {
   case 'build-schema': commandFn = require('./build-schema').default; break;
   case 'update-version': commandFn = require('./update-version').default; break;
   case 'changelog': commandFn = require('./changelog').default; break;
+  case 'docs': commandFn = require('./generate-docs').default; break;
 }
 
 if (commandFn) {

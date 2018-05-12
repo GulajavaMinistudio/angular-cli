@@ -3,7 +3,7 @@
 Hot Module Replacement (HMR) is a WebPack feature to update code in a running app without rebuilding it.
 This results in faster updates and less full page-reloads.
 
-You can read more about HRM by visiting [this page](https://webpack.github.io/docs/hot-module-replacement.html).
+You can read more about HMR by visiting [this page](https://webpack.js.org/guides/hot-module-replacement).
 
 In order to get HMR working with Angular CLI we first need to add a new environment and enable it.
 
@@ -22,7 +22,7 @@ export const environment = {
 };
 ```
 
-Update `src/environments/environment.prod.ts` and add the `hrm: false` flag to the environment:
+Update `src/environments/environment.prod.ts` and add the `hmr: false` flag to the environment:
 
 ```typescript
 export const environment = {
@@ -31,7 +31,7 @@ export const environment = {
 };
 ```
 
-Update `src/environments/environment.ts` and add the `hrm: false` flag to the environment:
+Update `src/environments/environment.ts` and add the `hmr: false` flag to the environment:
 
 ```typescript
 export const environment = {
@@ -41,21 +41,29 @@ export const environment = {
 ```
 
 
-Update `.angular-cli.json` by adding the new environment the existing environments object:
+Update `angular.json` to include an hmr environment as explained [here](./application-environments) and add a configuration within serve to enable hmr.
 
 ```json
-"environmentSource": "environments/environment.ts",
-"environments": {
-  "dev": "environments/environment.ts",
-  "hmr": "environments/environment.hmr.ts",
-  "prod": "environments/environment.prod.ts"
-},
+  "serve": {
+    "configuration": {
+      ...
+      "hmr": {
+        "hmr": true,
+        "fileReplacements": [
+          {
+            "replace": "src/environments/environment.ts",
+            "with": "src/environments/environment.hmr.ts"
+          }
+        ],
+      }
+    }
+  }
 ```
 
-Run `ng serve` with the flag `--hmr -e=hmr` to enable hmr and select the new environment:
+Run `ng serve` with the flag `--configuration hmr` to enable hmr and select the new environment:
 
 ```bash
-ng serve --hmr -e=hmr
+ng serve --configuration hmr
 ```
 
 Create a shortcut for this by updating  `package.json` and adding an entry to the script object:
@@ -63,7 +71,7 @@ Create a shortcut for this by updating  `package.json` and adding an entry to th
 ```json
 "scripts": {
   ...
-  "hmr": "ng serve --hmr -e=hmr"
+  "hmr": "ng serve --configuration hmr"
 }
 ```
 

@@ -4,28 +4,28 @@ require('../lib/bootstrap-local');
 
 const validateCommitMessage = require('./validate-commit-message');
 const execSync = require('child_process').execSync;
-const chalk = require('chalk');
-const Logger = require('@ngtools/logger').Logger;
-require('rxjs/add/operator/filter');
+const { logging, terminal } = require('@angular-devkit/core');
+const Logger = logging.Logger;
+const filter = require('rxjs/operators').filter;
 
 // Configure logger
 const logger = new Logger('test-commit-messages');
 
 logger.subscribe((entry) => {
-  let color = chalk.white;
+  let color = terminal.white;
   let output = process.stdout;
   switch (entry.level) {
-    case 'info': color = chalk.white; break;
-    case 'warn': color = chalk.yellow; break;
-    case 'error': color = chalk.red; output = process.stderr; break;
-    case 'fatal': color = (x) => chalk.bold(chalk.red(x)); output = process.stderr; break;
+    case 'info': color = terminal.white; break;
+    case 'warn': color = terminal.yellow; break;
+    case 'error': color = terminal.red; output = process.stderr; break;
+    case 'fatal': color = (x) => terminal.bold(terminal.red(x)); output = process.stderr; break;
   }
 
   output.write(color(entry.message) + '\n');
 });
 
 logger
-  .filter((entry) => entry.level === 'fatal')
+  .pipe(filter((entry) => entry.level === 'fatal'))
   .subscribe(() => {
     process.stderr.write('A fatal error happened. See details above.');
     process.exit(1);
@@ -33,13 +33,16 @@ logger
 
 // Note: This is based on the gulp task found in the angular/angular repository
 execSync('git fetch origin');
-// Travis doesn't have master when running jobs on other branches (minor/patch/etc).
-execSync('git fetch origin master:master');
 
 // Get PR target branch, default to master for running locally.
 const currentBranch = process.env.TRAVIS_BRANCH
   || process.env.APPVEYOR_REPO_BRANCH
   || 'master';
+
+if (currentBranch !== 'master') {
+  // Travis doesn't have master when running jobs on other branches (minor/patch/etc).
+  execSync('git fetch origin master:master --force');
+}
 
 const output = execSync('git log ' + currentBranch + '..HEAD --reverse --format="%H %s" --no-merges', {
   encoding: 'utf-8'
