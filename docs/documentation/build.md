@@ -1,4 +1,6 @@
 <!-- Links in /docs/documentation should NOT have `.md` at the end, because they end up in our wiki at release. -->
+**Documentation below is for CLI version 6 and we no longer accept PRs to improve this. For version 7 see [here](https://angular.io/cli/build)**.
+
 
 # ng build
 
@@ -113,7 +115,7 @@ See https://github.com/angular/angular-cli/issues/7797 for details.
     <code>--optimization</code>
   </p>
   <p>
-    Defines the optimization level of the build.
+    Enables optimization of the build output.
   </p>
 </details>
 <details>
@@ -150,6 +152,15 @@ See https://github.com/angular/angular-cli/issues/7797 for details.
   </p>
   <p>
     Output in-file eval sourcemaps.
+  </p>
+</details>
+<details>
+  <summary>vendor-source-map</summary>
+  <p>
+    <code>--vendor-source-map</code>
+  </p>
+  <p>
+    Resolve vendor packages sourcemaps.
   </p>
 </details>
 <details>
@@ -383,7 +394,7 @@ See https://github.com/angular/angular-cli/issues/7797 for details.
     <code>--stats-json</code>
   </p>
   <p>
-    Generates a 'stats.json' file which can be analyzed using tools such as: #webpack-bundle-analyzer' or https: //webpack.github.io/analyse.
+    Generates a 'stats.json' file which can be analyzed using tools such as: #webpack-bundle-analyzer' or https://webpack.github.io/analyse.
   </p>
 </details>
 <details>

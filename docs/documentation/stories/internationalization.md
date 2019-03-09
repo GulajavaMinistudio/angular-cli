@@ -1,3 +1,5 @@
+**Documentation below is for CLI version 6 and we no longer accept PRs to improve this. For version 7 see [here](https://angular.io/guide/i18n)**.
+
 # Internationalization (i18n)
 
 If you are working on internationalization, the CLI can help you with the following steps:
@@ -6,7 +8,7 @@ If you are working on internationalization, the CLI can help you with the follow
 - build
 
 The first thing that you have to do is to setup your application to use i18n.
-To do that you can follow [the cookbook on angular.io](https://angular.io/docs/ts/latest/cookbook/i18n.html).
+To do that you can follow [the cookbook on angular.io](https://angular.io/guide/i18n).
 
 ### Extraction
 When your app is ready, you can extract the strings to translate from your templates with the

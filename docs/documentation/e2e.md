@@ -1,4 +1,5 @@
 <!-- Links in /docs/documentation should NOT have `.md` at the end, because they end up in our wiki at release. -->
+**Documentation below is for CLI version 6 and we no longer accept PRs to improve this. For version 7 see [here](https://angular.io/cli/e2e)**.
 
 # ng e2e
 
@@ -15,7 +16,7 @@ ng e2e [project]
 ng e2e
 ```
 
-End-to-end tests are run via [Protractor](https://angular.github.io/protractor/).
+End-to-end tests are run via [Protractor](http://www.protractortest.org/).
 
 ## Options
 <details>

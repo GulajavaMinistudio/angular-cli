@@ -1,7 +1,12 @@
+**Documentation below is for CLI version 6 and we no longer accept PRs to improve this. For version 7 see [here](https://angular.io/cli/generate)**.
+
 # ng generate guard
 
 ## Overview
 `ng generate guard [name]` generates a guard
+
+## Alias
+g - `ng generate g [name]`
 
 ## Options
 <details>

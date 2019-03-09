@@ -1,3 +1,5 @@
+**Documentation below is for CLI version 6 and we no longer accept PRs to improve this. For version 7 see [here](https://angular.io/guide/build#configuring-application-environments)**.
+
 # Application Environments
 
 In Angular CLI you can configure the build system to replace existing files for your intended
@@ -28,7 +30,7 @@ This is useful for using different code or variables when creating a new build.
 By default no file is replaced in the build.
 
 You can add additional configurations as required.
-To add a **staging** environment, create a copy of `src/environments/environment.ts` called `src/environments/environment.staging.ts`, then add a `staging` configuration to `angular.jsob`:
+To add a **staging** environment, create a copy of `src/environments/environment.ts` called `src/environments/environment.staging.ts`, then add a `staging` configuration to `angular.json`:
 
 ```json
 "configurations": {
