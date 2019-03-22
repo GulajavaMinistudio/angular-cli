@@ -25,11 +25,13 @@
     },
     "karma": {
       "class": "./src/karma",
+      "implementation": "./src/karma/index2",
       "schema": "./src/karma/schema.json",
       "description": "Run Karma unit tests."
     },
     "protractor": {
       "class": "./src/protractor",
+      "implementation": "./src/protractor/index2",
       "schema": "./src/protractor/schema.json",
       "description": "Run protractor over a dev server."
     },
@@ -40,6 +42,7 @@
       "description": "Run tslint over a TS project."
     },
     "server": {
+      "implementation": "./src/server/index2",
       "class": "./src/server",
       "schema": "./src/server/schema.json",
       "description": "Build a server Angular application."
