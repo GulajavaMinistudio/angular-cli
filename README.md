@@ -36,15 +36,6 @@
   <br>
 </p>
 
-<p style="text-align: center">
-  <a href="https://circleci.com/gh/angular/workflows/angular-cli/tree/main">
-    <img src="https://img.shields.io/circleci/build/github/angular/angular-cli/main.svg?logo=circleci&logoColor=fff&label=CircleCI" alt="CI status" />
-  </a>&nbsp;
-  <a href="https://discord.gg/angular">
-    <img src="https://img.shields.io/discord/463752820026376202.svg?logo=discord&logoColor=fff&label=Discord&color=7389d8" alt="Discord conversation" />
-  </a>
-</p>
-
 <hr>
 
 ## Documentation
@@ -131,7 +122,7 @@ Read through our [developer guide][developer] to learn about how to build and te
 
 Join the conversation and help the community.
 
-- [Twitter][twitter]
+- [X (formerly Twitter)][twitter]
 - [Discord][discord]
 - [Gitter][gitter]
 - [YouTube][youtube]
@@ -198,7 +189,7 @@ This is a monorepo which contains many tools and packages:
 [node.js]: https://nodejs.org/
 [npm]: https://www.npmjs.com/get-npm
 [codeofconduct]: https://github.com/angular/angular/blob/main/CODE_OF_CONDUCT.md
-[twitter]: https://www.twitter.com/angular
+[twitter]: https://www.x.com/angular
 [discord]: https://discord.gg/angular
 [gitter]: https://gitter.im/angular/angular-cli
 [stackoverflow]: https://stackoverflow.com/questions/tagged/angular-cli

@@ -6,4 +6,9 @@
  * found in the LICENSE file at https://angular.dev/license
  */
 
-export { REQUEST, RESPONSE_INIT, REQUEST_CONTEXT } from './src/tokens';
+// See: https://github.com/jasmine/jasmine/issues/2015
+(function () {
+  'use strict';
+
+  delete window.toString;
+})();
