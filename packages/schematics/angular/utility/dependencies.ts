@@ -6,8 +6,11 @@
  * found in the LICENSE file at https://angular.dev/license
  */
 
-import { Tree } from '@angular-devkit/schematics';
+import { Rule, Tree } from '@angular-devkit/schematics';
+import { TestRunner } from '../ng-new/schema';
+import { DependencyType, ExistingBehavior, InstallBehavior, addDependency } from './dependency';
 import { JSONFile } from './json-file';
+import { latestVersions } from './latest-versions';
 
 const PKG_JSON_PATH = '/package.json';
 export enum NodeDependencyType {
@@ -77,4 +80,30 @@ export function getPackageJsonDependency(
   }
 
   return null;
+}
+
+export function addTestRunnerDependencies(
+  testRunner: TestRunner | undefined,
+  skipInstall: boolean,
+): Rule[] {
+  const dependencies =
+    testRunner === TestRunner.Vitest
+      ? ['vitest', 'jsdom']
+      : [
+          'karma',
+          'karma-chrome-launcher',
+          'karma-coverage',
+          'karma-jasmine',
+          'karma-jasmine-html-reporter',
+          'jasmine-core',
+          '@types/jasmine',
+        ];
+
+  return dependencies.map((name) =>
+    addDependency(name, latestVersions[name], {
+      type: DependencyType.Dev,
+      existing: ExistingBehavior.Skip,
+      install: skipInstall ? InstallBehavior.None : InstallBehavior.Auto,
+    }),
+  );
 }

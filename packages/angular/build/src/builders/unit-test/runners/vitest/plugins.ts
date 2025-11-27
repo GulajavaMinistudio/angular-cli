@@ -9,6 +9,7 @@
 import assert from 'node:assert';
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { platform } from 'node:os';
 import path from 'node:path';
 import type {
   BrowserConfigOptions,
@@ -163,14 +164,39 @@ export async function createVitestConfigPlugin(
   };
 }
 
+async function loadResultFile(file: ResultFile): Promise<string> {
+  if (file.origin === 'memory') {
+    return new TextDecoder('utf-8').decode(file.contents);
+  }
+
+  return readFile(file.inputPath, 'utf-8');
+}
+
 export function createVitestPlugins(pluginOptions: PluginOptions): VitestPlugins {
   const { workspaceRoot, buildResultFiles, testFileToEntryPoint } = pluginOptions;
+  const isWindows = platform() === 'win32';
 
   return [
     {
       name: 'angular:test-in-memory-provider',
       enforce: 'pre',
       resolveId: (id, importer) => {
+        // Fast path for test entry points.
+        if (testFileToEntryPoint.has(id)) {
+          return id;
+        }
+
+        // Workaround for Vitest in Windows when a fully qualified absolute path is provided with
+        // a superfluous leading slash. This can currently occur with the `@vitest/coverage-v8` provider
+        // when it uses `removeStartsWith(url, FILE_PROTOCOL)` to convert a file URL resulting in
+        // `/D:/tmp_dir/...` instead of `D:/tmp_dir/...`.
+        if (id[0] === '/' && isWindows) {
+          const slicedId = id.slice(1);
+          if (path.isAbsolute(slicedId)) {
+            return slicedId;
+          }
+        }
+
         if (importer && (id[0] === '.' || id[0] === '/')) {
           let fullPath;
           if (testFileToEntryPoint.has(importer)) {
@@ -185,15 +211,28 @@ export function createVitestPlugins(pluginOptions: PluginOptions): VitestPlugins
           }
         }
 
-        if (testFileToEntryPoint.has(id)) {
-          return id;
+        // Determine the base directory for resolution.
+        let baseDir: string;
+        if (importer) {
+          // If the importer is a test entry point, resolve relative to the workspace root.
+          // Otherwise, resolve relative to the importer's directory.
+          baseDir = testFileToEntryPoint.has(importer) ? workspaceRoot : path.dirname(importer);
+        } else {
+          // If there's no importer, assume the id is relative to the workspace root.
+          baseDir = workspaceRoot;
         }
 
-        assert(buildResultFiles.size > 0, 'buildResult must be available for resolving.');
-        const relativePath = path.relative(workspaceRoot, id);
+        // Construct the full, absolute path and normalize it to POSIX format.
+        const fullPath = toPosixPath(path.join(baseDir, id));
+
+        // Check if the resolved path corresponds to a known build artifact.
+        const relativePath = path.relative(workspaceRoot, fullPath);
         if (buildResultFiles.has(toPosixPath(relativePath))) {
-          return id;
+          return fullPath;
         }
+
+        // If the module cannot be resolved from the build artifacts, let other plugins handle it.
+        return undefined;
       },
       load: async (id) => {
         assert(buildResultFiles.size > 0, 'buildResult must be available for in-memory loading.');
@@ -217,17 +256,10 @@ export function createVitestPlugins(pluginOptions: PluginOptions): VitestPlugins
 
         const outputFile = buildResultFiles.get(outputPath);
         if (outputFile) {
+          const code = await loadResultFile(outputFile);
           const sourceMapPath = outputPath + '.map';
           const sourceMapFile = buildResultFiles.get(sourceMapPath);
-          const code =
-            outputFile.origin === 'memory'
-              ? Buffer.from(outputFile.contents).toString('utf-8')
-              : await readFile(outputFile.inputPath, 'utf-8');
-          const sourceMapText = sourceMapFile
-            ? sourceMapFile.origin === 'memory'
-              ? Buffer.from(sourceMapFile.contents).toString('utf-8')
-              : await readFile(sourceMapFile.inputPath, 'utf-8')
-            : undefined;
+          const sourceMapText = sourceMapFile ? await loadResultFile(sourceMapFile) : undefined;
 
           // Vitest will include files in the coverage report if the sourcemap contains no sources.
           // For builder-internal generated code chunks, which are typically helper functions,
