@@ -1,11 +1,9 @@
-import * as ansiColors from 'ansi-colors';
 import { spawn, SpawnOptions } from 'node:child_process';
 import * as child_process from 'node:child_process';
-import { concat, defer, EMPTY, from, lastValueFrom, catchError, repeat } from 'rxjs';
 import { getGlobalVariable, getGlobalVariablesEnv } from './env';
 import treeKill from 'tree-kill';
 import { delimiter, join, resolve } from 'node:path';
-import { stripVTControlCharacters } from 'node:util';
+import { stripVTControlCharacters, styleText } from 'node:util';
 
 interface ExecOptions {
   silent?: boolean;
@@ -30,9 +28,6 @@ export type ProcessOutput = {
 };
 
 function _exec(options: ExecOptions, cmd: string, args: string[]): Promise<ProcessOutput> {
-  // Create a separate instance to prevent unintended global changes to the color configuration
-  const colors = ansiColors.create();
-
   const cwd = options.cwd ?? process.cwd();
   const env = options.env ?? process.env;
 
@@ -57,8 +52,10 @@ function _exec(options: ExecOptions, cmd: string, args: string[]): Promise<Proce
     .join(', ')
     .replace(/^(.+)$/, ' [$1]'); // Proper formatting.
 
-  console.log(colors.blue(`Running \`${cmd} ${args.map((x) => `"${x}"`).join(' ')}\`${flags}...`));
-  console.log(colors.blue(`CWD: ${cwd}`));
+  console.log(
+    styleText(['blue'], `Running \`${cmd} ${args.map((x) => `"${x}"`).join(' ')}\`${flags}...`),
+  );
+  console.log(styleText(['blue'], `CWD: ${cwd}`));
 
   const spawnOptions: SpawnOptions = {
     cwd,
@@ -123,7 +120,7 @@ function _exec(options: ExecOptions, cmd: string, args: string[]): Promise<Proce
         .toString('utf-8')
         .split(/[\n\r]+/)
         .filter((line) => line !== '')
-        .forEach((line) => console.error(colors.yellow('  ' + line)));
+        .forEach((line) => console.error(styleText(['yellow'], '  ' + line)));
     });
 
     childProcess.on('close', (code) => {
@@ -312,7 +309,7 @@ export async function execAndCaptureError(
   }
 }
 
-export function execAndWaitForOutputToMatch(
+export async function execAndWaitForOutputToMatch(
   cmd: string,
   args: string[],
   match: RegExp,
@@ -324,15 +321,19 @@ export function execAndWaitForOutputToMatch(
     // happened just before the build (e.g. `git clean`).
     // This seems to be due to host file system differences, see
     // https://nodejs.org/docs/latest/api/fs.html#fs_caveats
-    return lastValueFrom(
-      concat(
-        from(_exec({ waitForMatch: match, env }, cmd, args)),
-        defer(() => waitForAnyProcessOutputToMatch(match, 2500)).pipe(
-          repeat(20),
-          catchError(() => EMPTY),
-        ),
-      ),
-    );
+    const maxRetries = 20;
+    let lastResult = await _exec({ waitForMatch: match, env }, cmd, args);
+
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        lastResult = await waitForAnyProcessOutputToMatch(match, 2500);
+      } catch {
+        // If we timeout (no new match found), we assume the process is stable.
+        break;
+      }
+    }
+
+    return lastResult;
   } else {
     return _exec({ waitForMatch: match, env }, cmd, args);
   }

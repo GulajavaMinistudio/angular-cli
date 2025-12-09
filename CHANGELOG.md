@@ -1,3 +1,71 @@
+<a name="21.1.0-next.1"></a>
+
+# 21.1.0-next.1 (2025-12-03)
+
+### @angular/cli
+
+| Commit                                                                                              | Type | Description              |
+| --------------------------------------------------------------------------------------------------- | ---- | ------------------------ |
+| [d635a6c63](https://github.com/angular/angular-cli/commit/d635a6c6335d0838fc0977f6742f6aa9f769c527) | feat | add signal forms lessons |
+
+### @schematics/angular
+
+| Commit                                                                                              | Type | Description                                                      |
+| --------------------------------------------------------------------------------------------------- | ---- | ---------------------------------------------------------------- |
+| [e71a72ffd](https://github.com/angular/angular-cli/commit/e71a72ffdc426e26bfb4f0bb92e8f5795a621c18) | feat | generate detailed migration report for `refactor-jasmine-vitest` |
+
+### @angular-devkit/schematics
+
+| Commit                                                                                              | Type | Description                       |
+| --------------------------------------------------------------------------------------------------- | ---- | --------------------------------- |
+| [98e10fa0f](https://github.com/angular/angular-cli/commit/98e10fa0f29cc8f6cf6a25c45c6888a79465eaf7) | fix  | remove lazy imports in node tasks |
+
+### @angular/build
+
+| Commit                                                                                              | Type | Description                                                |
+| --------------------------------------------------------------------------------------------------- | ---- | ---------------------------------------------------------- |
+| [63c3e3f64](https://github.com/angular/angular-cli/commit/63c3e3f6406d345e777ca18bfad7d6d701e5c4ea) | fix  | add filename truncation to test discovery                  |
+| [8d8ba4f61](https://github.com/angular/angular-cli/commit/8d8ba4f61fc07dd670b705c48e82cf63424b3cce) | fix  | allow overriding Vitest coverage `reportsDirectory` option |
+
+<!-- CHANGELOG SPLIT MARKER -->
+
+<a name="21.0.2"></a>
+
+# 21.0.2 (2025-12-03)
+
+### @angular/cli
+
+| Commit                                                                                              | Type | Description                                   |
+| --------------------------------------------------------------------------------------------------- | ---- | --------------------------------------------- |
+| [f1a7116cd](https://github.com/angular/angular-cli/commit/f1a7116cdff1bd83b26b0d64cea14ec4e8084583) | fix  | update `@modelcontextprotocol/sdk` to v1.24.0 |
+
+### @angular-devkit/schematics
+
+| Commit                                                                                              | Type | Description                       |
+| --------------------------------------------------------------------------------------------------- | ---- | --------------------------------- |
+| [dc6d9469e](https://github.com/angular/angular-cli/commit/dc6d9469ea494bbfee7da191774e9fa3c0baf30a) | fix  | remove lazy imports in node tasks |
+
+### @angular/build
+
+| Commit                                                                                              | Type | Description                                                |
+| --------------------------------------------------------------------------------------------------- | ---- | ---------------------------------------------------------- |
+| [f8a1939fd](https://github.com/angular/angular-cli/commit/f8a1939fdf5abbc1de439d288d9357d4f92a72a9) | fix  | add filename truncation to test discovery                  |
+| [86dd3297f](https://github.com/angular/angular-cli/commit/86dd3297f7ad81788713cfd8dae48c0fad4b89ab) | fix  | allow overriding Vitest coverage `reportsDirectory` option |
+
+<!-- CHANGELOG SPLIT MARKER -->
+
+<a name="20.3.13"></a>
+
+# 20.3.13 (2025-12-03)
+
+### @angular/cli
+
+| Commit                                                                                              | Type | Description                                   |
+| --------------------------------------------------------------------------------------------------- | ---- | --------------------------------------------- |
+| [cfbb61602](https://github.com/angular/angular-cli/commit/cfbb61602daf32c5b942ea84702fc3638aa111e7) | fix  | update `@modelcontextprotocol/sdk` to v1.24.0 |
+
+<!-- CHANGELOG SPLIT MARKER -->
+
 <a name="21.1.0-next.0"></a>
 
 # 21.1.0-next.0 (2025-11-26)

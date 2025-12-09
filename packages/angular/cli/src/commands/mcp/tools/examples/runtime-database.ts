@@ -6,10 +6,10 @@
  * found in the LICENSE file at https://angular.dev/license
  */
 
-const { globSync, readdirSync, readFileSync, mkdirSync, existsSync, rmSync } = require('node:fs');
-const { resolve, dirname, join } = require('node:path');
-const { DatabaseSync } = require('node:sqlite');
-const { z } = require('zod');
+import { join } from 'node:path';
+import type { DatabaseSync } from 'node:sqlite';
+import { z } from 'zod';
+import type { McpToolContext } from '../tool-registry';
 
 /**
  * A simple YAML front matter parser.
@@ -21,19 +21,19 @@ const { z } = require('zod');
  * @param content The string content to parse.
  * @returns A record containing the parsed front matter data.
  */
-function parseFrontmatter(content) {
+function parseFrontmatter(content: string): Record<string, unknown> {
   const match = content.match(/^---\r?\n(.*?)\r?\n---/s);
   if (!match) {
     return {};
   }
 
   const frontmatter = match[1];
-  const data = {};
+  const data: Record<string, unknown> = {};
   const lines = frontmatter.split(/\r?\n/);
 
   let currentKey = '';
   let isArray = false;
-  const arrayValues = [];
+  const arrayValues: string[] = [];
 
   for (const line of lines) {
     const keyValueMatch = line.match(/^([^:]+):\s*(.*)/);
@@ -80,16 +80,14 @@ function parseFrontmatter(content) {
   return data;
 }
 
-function generate(inPath, outPath) {
-  const dbPath = outPath;
-  mkdirSync(dirname(outPath), { recursive: true });
+export async function setupRuntimeExamples(
+  examplesPath: string,
+  host: McpToolContext['host'],
+): Promise<DatabaseSync> {
+  const { DatabaseSync } = await import('node:sqlite');
+  const db = new DatabaseSync(':memory:');
 
-  if (existsSync(dbPath)) {
-    rmSync(dbPath);
-  }
-  const db = new DatabaseSync(dbPath);
-
-  // Create a table to store metadata.
+  // Create a relational table to store the structured example data.
   db.exec(`
     CREATE TABLE metadata (
       key TEXT PRIMARY KEY NOT NULL,
@@ -103,7 +101,6 @@ function generate(inPath, outPath) {
       ('created_at', '${new Date().toISOString()}');
   `);
 
-  // Create a relational table to store the structured example data.
   db.exec(`
     CREATE TABLE examples (
       id INTEGER PRIMARY KEY,
@@ -137,13 +134,10 @@ function generate(inPath, outPath) {
   // Create triggers to keep the FTS table synchronized with the examples table.
   db.exec(`
     CREATE TRIGGER examples_after_insert AFTER INSERT ON examples BEGIN
-      INSERT INTO examples_fts(
-        rowid, title, summary, keywords, required_packages, related_concepts, related_tools,
-        content
-      )
+      INSERT INTO examples_fts(rowid, title, summary, keywords, required_packages, related_concepts, related_tools, content)
       VALUES (
-        new.id, new.title, new.summary, new.keywords, new.required_packages,
-        new.related_concepts, new.related_tools, new.content
+        new.id, new.title, new.summary, new.keywords, new.required_packages, new.related_concepts,
+        new.related_tools, new.content
       );
     END;
   `);
@@ -165,22 +159,19 @@ function generate(inPath, outPath) {
   });
 
   db.exec('BEGIN TRANSACTION');
-  const entries = globSync
-    ? globSync('**/*.md', { cwd: resolve(inPath), withFileTypes: true })
-    : readdirSync(resolve(inPath), { withFileTypes: true });
-  for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith('.md')) {
+  for await (const entry of host.glob('**/*.md', { cwd: examplesPath })) {
+    if (!entry.isFile()) {
       continue;
     }
 
-    const content = readFileSync(join(entry.parentPath, entry.name), 'utf-8');
+    const content = await host.readFile(join(entry.parentPath, entry.name), 'utf-8');
     const frontmatter = parseFrontmatter(content);
 
     const validation = frontmatterSchema.safeParse(frontmatter);
     if (!validation.success) {
-      console.error(`Validation failed for example file: ${entry.name}`);
-      console.error('Issues:', validation.error.issues);
-      throw new Error(`Invalid front matter in ${entry.name}`);
+      // eslint-disable-next-line no-console
+      console.warn(`Skipping invalid example file ${entry.name}:`, validation.error.issues);
+      continue;
     }
 
     const {
@@ -192,6 +183,7 @@ function generate(inPath, outPath) {
       related_tools,
       experimental,
     } = validation.data;
+
     insertStatement.run(
       title,
       summary,
@@ -205,25 +197,5 @@ function generate(inPath, outPath) {
   }
   db.exec('END TRANSACTION');
 
-  db.close();
+  return db;
 }
-
-if (require.main === module) {
-  const argv = process.argv.slice(2);
-  if (argv.length !== 2) {
-    console.error('Must include 2 arguments.');
-    process.exit(1);
-  }
-
-  const [inPath, outPath] = argv;
-
-  try {
-    generate(inPath, outPath);
-  } catch (error) {
-    console.error('An error happened:');
-    console.error(error);
-    process.exit(127);
-  }
-}
-
-exports.generate = generate;
