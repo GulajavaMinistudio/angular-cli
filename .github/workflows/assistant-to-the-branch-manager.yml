@@ -12,10 +12,11 @@ permissions:
 jobs:
   assistant_to_the_branch_manager:
     runs-on: ubuntu-latest
+    if: github.event.repository.fork == false
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           persist-credentials: false
-      - uses: angular/dev-infra/github-actions/branch-manager@4ec84059f295affa82fe766682981b8b838a057b
+      - uses: angular/dev-infra/github-actions/branch-manager@2b0a3018401da50c0b34a4dedde2a6fdb9e90394
         with:
           angular-robot-key: ${{ secrets.ANGULAR_ROBOT_PRIVATE_KEY }}

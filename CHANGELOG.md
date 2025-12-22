@@ -1,3 +1,126 @@
+<a name="21.1.0-next.3"></a>
+
+# 21.1.0-next.3 (2025-12-18)
+
+### @angular/cli
+
+| Commit                                                                                              | Type | Description                                                               |
+| --------------------------------------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------- |
+| [348096623](https://github.com/angular/angular-cli/commit/348096623326857a5d8cf77d56712776e1190180) | fix  | enhance list_projects MCP tool file system traversal and symlink handling |
+| [032257a6d](https://github.com/angular/angular-cli/commit/032257a6d00360d2c4e6d5406409dcfa5b27d1d5) | fix  | improve signal forms lesson examples in AI tutor                          |
+| [18d74dde8](https://github.com/angular/angular-cli/commit/18d74dde8938dbe566df80753d5c148c19040179) | fix  | rename mcp devserver tools to comply with naming spec                     |
+| [a15db28b2](https://github.com/angular/angular-cli/commit/a15db28b29f6f43bef1ed1ca7c6a963d9943f801) | perf | cache resolved specific version in package manager abstraction            |
+
+### @schematics/angular
+
+| Commit                                                                                              | Type | Description                                                |
+| --------------------------------------------------------------------------------------------------- | ---- | ---------------------------------------------------------- |
+| [52ace04a7](https://github.com/angular/angular-cli/commit/52ace04a7ca1c102fdf1addf5ab6fe400c0eab0e) | fix  | improve VS Code background compilation start/end detection |
+| [288a9225c](https://github.com/angular/angular-cli/commit/288a9225c83edec9560e2b39901740e792c54d27) | fix  | remove `inlineSources` from library tsconfig template      |
+
+### @angular/build
+
+| Commit                                                                                              | Type | Description                                              |
+| --------------------------------------------------------------------------------------------------- | ---- | -------------------------------------------------------- |
+| [98c207bc0](https://github.com/angular/angular-cli/commit/98c207bc0e44caccd6fffa5b8d3a013a2a3a871a) | fix  | add browser condition to resolver for vitest             |
+| [f39f7ee95](https://github.com/angular/angular-cli/commit/f39f7ee9529113f7c75d0e0e3ffa628fed9ce92f) | fix  | allow non-prefixed requests when using SSR and base href |
+| [7c7e6a614](https://github.com/angular/angular-cli/commit/7c7e6a6142a9d294e04c612463449d2a4360e692) | fix  | conditionally manage Vitest UI option                    |
+| [edeb41c0e](https://github.com/angular/angular-cli/commit/edeb41c0e01881c21dec4d7f63fe8d302ce0521d) | fix  | ensure tests run when compilation error is resolved      |
+| [9744af1f8](https://github.com/angular/angular-cli/commit/9744af1f82a8e9c2816adf636e4e8a1a8be06c60) | fix  | remove LmdbCacheStore export from private API            |
+
+### @angular/ssr
+
+| Commit                                                                                              | Type | Description                                                          |
+| --------------------------------------------------------------------------------------------------- | ---- | -------------------------------------------------------------------- |
+| [e5651224b](https://github.com/angular/angular-cli/commit/e5651224b5086335d48b133e1d0b9c8536c22e5f) | fix  | add leading slash to well-known non-Angular URLs                     |
+| [081e31337](https://github.com/angular/angular-cli/commit/081e3133764c9a23f70969bfd182259be34a411e) | fix  | propagate status code to redirect                                    |
+| [2d56a319d](https://github.com/angular/angular-cli/commit/2d56a319d8d45f36d9e5d958cbbd96e195c2c15e) | fix  | skip SSR processing for well-known non-Angular URLs like favicon.ico |
+
+<!-- CHANGELOG SPLIT MARKER -->
+
+<a name="21.0.4"></a>
+
+# 21.0.4 (2025-12-18)
+
+### @schematics/angular
+
+| Commit                                                                                              | Type | Description                                                |
+| --------------------------------------------------------------------------------------------------- | ---- | ---------------------------------------------------------- |
+| [b671245b9](https://github.com/angular/angular-cli/commit/b671245b9d3ba98ac0f66dbd34f272539113be61) | fix  | improve VS Code background compilation start/end detection |
+| [85a28dec7](https://github.com/angular/angular-cli/commit/85a28dec771cce77a3ffee35f419b5fedca807b8) | fix  | remove `inlineSources` from library tsconfig template      |
+
+### @angular/build
+
+| Commit                                                                                              | Type | Description                                              |
+| --------------------------------------------------------------------------------------------------- | ---- | -------------------------------------------------------- |
+| [deb4fff61](https://github.com/angular/angular-cli/commit/deb4fff6196d2eb147e358a7143e2ada2b6114c9) | fix  | add browser condition to resolver for vitest             |
+| [570ce8d3e](https://github.com/angular/angular-cli/commit/570ce8d3eeb280eeb6dca6ba54593c9325674741) | fix  | allow non-prefixed requests when using SSR and base href |
+| [4dd3c1a32](https://github.com/angular/angular-cli/commit/4dd3c1a324c8e90808cc1c5febf65c8fa49dd3b9) | fix  | conditionally manage Vitest UI option                    |
+| [4b8b7caec](https://github.com/angular/angular-cli/commit/4b8b7caece41f86746321a98786dfdff499582b6) | fix  | ensure tests run when compilation error is resolved      |
+| [bef4fcecb](https://github.com/angular/angular-cli/commit/bef4fcecb6d116f9f022da845f06708cf29be02a) | fix  | remove LmdbCacheStore export from private API            |
+
+### @angular/ssr
+
+| Commit                                                                                              | Type | Description                                                          |
+| --------------------------------------------------------------------------------------------------- | ---- | -------------------------------------------------------------------- |
+| [bb54747da](https://github.com/angular/angular-cli/commit/bb54747da69fb15b6c2ebb52b45a83cbff3231c8) | fix  | add leading slash to well-known non-Angular URLs                     |
+| [0cfe2e749](https://github.com/angular/angular-cli/commit/0cfe2e749f50b832c64bbba322eb0cef7ad40365) | fix  | propagate status code to redirect                                    |
+| [eadadb848](https://github.com/angular/angular-cli/commit/eadadb848ca7fa45c4dda835af39400e017bbe1c) | fix  | skip SSR processing for well-known non-Angular URLs like favicon.ico |
+
+<!-- CHANGELOG SPLIT MARKER -->
+
+<a name="21.1.0-next.2"></a>
+
+# 21.1.0-next.2 (2025-12-10)
+
+### @angular/cli
+
+| Commit                                                                                              | Type | Description                                                    |
+| --------------------------------------------------------------------------------------------------- | ---- | -------------------------------------------------------------- |
+| [d8b76e93d](https://github.com/angular/angular-cli/commit/d8b76e93d3e9e4e7bd7ad6e12fdf59cd663cbb8e) | fix  | correctly handle yarn classic tag manifest fetching            |
+| [7ab5c0b0a](https://github.com/angular/angular-cli/commit/7ab5c0b0a1c637f3e0adb71486e5e7e8716561e4) | fix  | correctly spawn package managers on Windows in new abstraction |
+| [240588b7e](https://github.com/angular/angular-cli/commit/240588b7e3c8698c83110793ab98d20caee4e1a4) | perf | optimize `ng add` version discovery                            |
+
+### @angular-devkit/build-angular
+
+| Commit                                                                                              | Type | Description                                                                   |
+| --------------------------------------------------------------------------------------------------- | ---- | ----------------------------------------------------------------------------- |
+| [985aa18d0](https://github.com/angular/angular-cli/commit/985aa18d0b6cf728c498c0873793e131a4c416c1) | fix  | conditionally provide Zone.js change detection in the built-in test main file |
+
+### @angular/build
+
+| Commit                                                                                              | Type | Description                                                                                                 |
+| --------------------------------------------------------------------------------------------------- | ---- | ----------------------------------------------------------------------------------------------------------- |
+| [30b5d81b4](https://github.com/angular/angular-cli/commit/30b5d81b4adafca32c94672a39574daa2e3fc8b7) | fix  | Add custom middleware for to present an Angular-tailored message                                            |
+| [2e7227b8d](https://github.com/angular/angular-cli/commit/2e7227b8dc04d4b2ca20e18baaeebaa65d3c2aac) | fix  | Ensure disposal of close-javascript-transformer                                                             |
+| [38b16ea01](https://github.com/angular/angular-cli/commit/38b16ea0108c48835dc0d81863eca84f7b8cea6e) | fix  | ensure locale base href retains leading slash ([#32040](https://github.com/angular/angular-cli/pull/32040)) |
+| [385165cbc](https://github.com/angular/angular-cli/commit/385165cbc6ff087e6bc1fb6f686d4929e83a075a) | fix  | inject testing polyfills in Karma unit-test executor                                                        |
+| [6d212206f](https://github.com/angular/angular-cli/commit/6d212206fdfc94e661a25bed1287c0bc15219b63) | fix  | support NODE_EXTRA_CA_CERTS in SSR SSL plugin                                                               |
+
+<!-- CHANGELOG SPLIT MARKER -->
+
+<a name="21.0.3"></a>
+
+# 21.0.3 (2025-12-10)
+
+### @angular-devkit/build-angular
+
+| Commit                                                                                              | Type | Description                                                                   |
+| --------------------------------------------------------------------------------------------------- | ---- | ----------------------------------------------------------------------------- |
+| [5d85f416f](https://github.com/angular/angular-cli/commit/5d85f416f43b6bcd07b28ab920cb40c61a83ebdd) | fix  | conditionally provide Zone.js change detection in the built-in test main file |
+
+### @angular/build
+
+| Commit                                                                                              | Type | Description                                                                                                 |
+| --------------------------------------------------------------------------------------------------- | ---- | ----------------------------------------------------------------------------------------------------------- |
+| [778b4cffc](https://github.com/angular/angular-cli/commit/778b4cffc03e7c137940e3b8c89f290fd226cf17) | fix  | Add custom middleware for to present an Angular-tailored message                                            |
+| [9b02ab2ee](https://github.com/angular/angular-cli/commit/9b02ab2ee0a36aa6aafd94ea8059b48679845860) | fix  | Ensure disposal of close-javascript-transformer                                                             |
+| [0fc7d576e](https://github.com/angular/angular-cli/commit/0fc7d576e53f45601fdbeb95f4a853ebceae4fad) | fix  | ensure locale base href retains leading slash ([#32040](https://github.com/angular/angular-cli/pull/32040)) |
+| [b141670a2](https://github.com/angular/angular-cli/commit/b141670a2453dd0ea5fe6aa22ddae7175893d813) | fix  | inject testing polyfills in Karma unit-test executor                                                        |
+| [88c18ce68](https://github.com/angular/angular-cli/commit/88c18ce68585726652b88b10ce090039fbe1829f) | fix  | support NODE_EXTRA_CA_CERTS in SSR SSL plugin                                                               |
+
+<!-- CHANGELOG SPLIT MARKER -->
+
 <a name="21.1.0-next.1"></a>
 
 # 21.1.0-next.1 (2025-12-03)

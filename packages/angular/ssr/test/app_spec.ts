@@ -12,7 +12,7 @@ import '@angular/compiler';
 /* eslint-enable import/no-unassigned-import */
 
 import { APP_BASE_HREF } from '@angular/common';
-import { Component, REQUEST, inject } from '@angular/core';
+import { Component, REQUEST, RESPONSE_INIT, inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AngularServerApp } from '../src/app';
 import { RenderMode } from '../src/routes/route-config';
@@ -33,6 +33,11 @@ describe('AngularServerApp', () => {
     })
     class RedirectComponent {
       constructor() {
+        const responseInit = inject(RESPONSE_INIT);
+        if (responseInit) {
+          responseInit.status = 308;
+        }
+
         void inject(Router).navigate([], {
           queryParams: { filter: 'test' },
         });
@@ -139,6 +144,14 @@ describe('AngularServerApp', () => {
   });
 
   describe('handle', () => {
+    it('should return null for well-known non-angular URLs', async () => {
+      const response = await app.handle(
+        new Request('http://localhost/.well-known/appspecific/com.chrome.devtools.json'),
+      );
+
+      expect(response).toBeNull();
+    });
+
     describe('CSR and SSG pages', () => {
       it('should correctly render the content for the requested page', async () => {
         const response = await app.handle(new Request('http://localhost/home'));
@@ -310,7 +323,7 @@ describe('AngularServerApp', () => {
       it('returns a 302 status and redirects to the correct location when `router.navigate` is used', async () => {
         const response = await app.handle(new Request('http://localhost/redirect-via-navigate'));
         expect(response?.headers.get('location')).toBe('/redirect-via-navigate?filter=test');
-        expect(response?.status).toBe(302);
+        expect(response?.status).toBe(308);
       });
 
       it('returns a 302 status and redirects to the correct location when `urlTree` is updated in a guard', async () => {
