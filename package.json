@@ -22,19 +22,18 @@
     "postinstall": "husky",
     "ts-circular-deps": "ng-dev ts-circular-deps --config ./scripts/circular-deps-test.conf.mjs",
     "check-tooling-setup": "tsc --project .ng-dev/tsconfig.json",
-    "diff-release-package": "node scripts/diff-release-package.mts",
-    "ng-dev": "ng-dev"
+    "diff-release-package": "node scripts/diff-release-package.mts"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/angular/angular-cli.git"
   },
-  "packageManager": "pnpm@10.26.0",
+  "packageManager": "pnpm@10.26.1",
   "engines": {
     "node": "^20.19.0 || ^22.12.0 || >=24.0.0",
     "npm": "Please use pnpm instead of NPM to install dependencies",
     "yarn": "Please use pnpm instead of Yarn to install dependencies",
-    "pnpm": "10.26.0"
+    "pnpm": "10.26.1"
   },
   "author": "Angular Authors",
   "license": "MIT",
@@ -52,7 +51,7 @@
     "@angular/forms": "21.1.0-next.4",
     "@angular/localize": "21.1.0-next.4",
     "@angular/material": "21.1.0-next.3",
-    "@angular/ng-dev": "https://github.com/angular/dev-infra-private-ng-dev-builds.git#732af8115cf207c0a6c851592cd60562b2ab463b",
+    "@angular/ng-dev": "https://github.com/angular/dev-infra-private-ng-dev-builds.git#ddc3809c1993612732eaae62d28e828b2ed789e5",
     "@angular/platform-browser": "21.1.0-next.4",
     "@angular/platform-server": "21.1.0-next.4",
     "@angular/router": "21.1.0-next.4",
